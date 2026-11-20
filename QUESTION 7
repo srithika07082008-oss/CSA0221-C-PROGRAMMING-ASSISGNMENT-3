@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct { int id; long votes; } Candidate;
+static int before(const Candidate *a,const Candidate *b) {
+    if (a->votes != b->votes) return a->votes > b->votes;
+    return a->id < b->id;       /* stable, documented tie display order */
+}
+int main(void) {
+    int c; long v;
+    printf("Candidates and votes: ");
+    if (scanf("%d %ld",&c,&v)!=2 || c<1 || c>12 || v<0 || v>500000) {
+        fprintf(stderr,"Invalid candidate or vote count.\n"); return 1;
+    }
+    long *count=calloc((size_t)c,sizeof *count);
+    Candidate *order=malloc((size_t)c*sizeof *order);
+    if (!count || !order) { free(count); free(order); return 1; }
+    long valid=0,invalid=0;
+    for (long i=0;i<v;++i) {
+        int x;
+        if (scanf("%d",&x)!=1) {
+            fprintf(stderr,"Missing or malformed vote at position %ld.\n",i+1);
+            free(count); free(order); return 1;
+        }
+        if (x>=1 && x<=c) { ++count[x-1]; ++valid; }
+        else ++invalid;
+    }
+    for (int i=0;i<c;++i) { order[i].id=i+1; order[i].votes=count[i]; }
+    for (int i=1;i<c;++i) {
+        Candidate key=order[i]; int j=i-1;
+        while (j>=0 && before(&key,&order[j])) { order[j+1]=order[j]; --j; }
+        order[j+1]=key;
+    }
+    printf("Valid votes: %ld\nInvalid votes: %ld\n",valid,invalid);
+    puts("Candidate totals (descending):");
+    for (int i=0;i<c;++i)
+        printf("Candidate %d: %ld\n",order[i].id,order[i].votes);
+    long high=order[0].votes; int leaders=0;
+    while (leaders<c && order[leaders].votes==high) ++leaders;
+    if (leaders>1) {
+        printf("Tie for winner (%d candidates):",leaders);
+        for (int i=0;i<leaders;++i) printf(" %d",order[i].id);
+        putchar('\n');
+    } else printf("Winner: Candidate %d\n",order[0].id);
+    free(count); free(order);
+    return 0;
+}
