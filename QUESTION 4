@@ -1,0 +1,45 @@
+#include <stdio.h>
+
+#define D 38
+#define M 12
+
+void annual_totals(const double r[D][M], double total[D]) {
+    for (int i=0;i<D;++i) {
+        total[i]=0;
+        for (int j=0;j<M;++j) total[i]+=r[i][j];
+    }
+}
+void monthly_averages(const double r[D][M], double avg[M]) {
+    for (int j=0;j<M;++j) {
+        double sum=0;
+        for (int i=0;i<D;++i) sum+=r[i][j];
+        avg[j]=sum/D;
+    }
+}
+void wettest(const double r[D][M], double *value, int *district, int *month) {
+    *value=r[0][0]; *district=0; *month=0;
+    for (int i=0;i<D;++i) for (int j=0;j<M;++j)
+        if (r[i][j] > *value) {
+            *value=r[i][j]; *district=i; *month=j;
+        }
+}
+int deficient(const double total[D], int out[D], double fraction) {
+    double state_mean=0;
+    for (int i=0;i<D;++i) state_mean+=total[i];
+    state_mean/=D;
+    int count=0;
+    for (int i=0;i<D;++i)
+        if (total[i] < fraction*state_mean) out[count++]=i;
+    return count;
+}
+int main(void) {
+    double r[D][M]={{0}}, total[D], avg[M], maxv;
+    int maxd,maxm, low[D];
+    /* Replace the zero initialization with 38x12 readings, e.g. nested scanf. */
+    annual_totals(r,total); monthly_averages(r,avg);
+    wettest(r,&maxv,&maxd,&maxm);
+    int count=deficient(total,low,0.60);
+    printf("Wettest %.2f at district %d month %d\n",maxv,maxd+1,maxm+1);
+    printf("Deficient districts: %d\n",count);
+    return 0;
+}
